@@ -38,7 +38,7 @@ val_freq = 2        # 多久考一次試 ?
 MODEL_PATH = os.path.join(os.getcwd(), "model") + os.sep
 SAVE_freq = 1
 
-suffix = "model_checkpoint_00100.pt"     # ✨接著做的模型檔名
+suffix = "model.pt"     # ✨接著做的模型檔名
 tain_next = False     # ✨如果你今天訓練到第 10 個 Epoch 關掉電腦，明天想繼續，就把這個改成 True，它就會去 model 資料夾底下讀取 model.pt 繼續跑。
 trained_epoch = 0       # ✨上次跑到第幾輪 ?
 
