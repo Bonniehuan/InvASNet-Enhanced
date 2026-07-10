@@ -18,7 +18,7 @@ secret_sr = 16000   # 「秘密聲音 (Secret)」預期是 16 kHz（一般的語
 # ---- training hyperparams ----
 log10_lr = -4.5         # 學習率 (Learning Rate)。也就是教練每次巴 AI 頭的「力道」。這裡設定為 $10^{-4.5}$（大約 0.0000316），這是一個在訓練可逆神經網路時非常常見且安全的「微調力道」。
 lr = 10 ** log10_lr
-epochs = 100         # ✨總共要讓 AI 訓練幾個日夜輪迴。
+epochs = 10         # ✨總共要讓 AI 訓練幾個日夜輪迴。
 
 betas = (0.5, 0.999)
 weight_decay = 1e-5
@@ -32,7 +32,7 @@ lamda_low_frequency = 1 # 低頻約束的權重
 batch_size = 2          # 每次教練丟「幾題」給 AI 寫。因為聲音資料很佔記憶體，所以這裡設 2（一次餵兩組聲音進去）。如果你顯示卡記憶體夠大，可以調成 4 或 8，訓練會更快。
 batchsize_val = 1
 shuffle_val = False
-val_freq = 0        # 多久考一次試 ?
+val_freq = 2        # 多久考一次試 ?
 
 # ---- checkpoint ----
 MODEL_PATH = os.path.join(os.getcwd(), "model") + os.sep
