@@ -226,7 +226,7 @@ def main():
                 check_finite("steg_q", steg_q)    
 
                 # 4) backward (recover)
-                z_rand = gauss_noise_like(y_z)
+                z_rand = torch.zeros_like(y_z)
                 y_steg_q = dwt(steg_q)                                   # ← 量化後再 DWT 回頻域
                 y_rev_in = torch.cat([y_steg_q, z_rand], dim=1)          # ← 用量化版本
                 x_hat = net(y_rev_in, rev=True)
@@ -296,7 +296,7 @@ def main():
                         y_z = y.narrow(1, split_factor * channels_in, y.shape[1] - split_factor * channels_in)
 
                         steg = iwt(y_steg)
-                        z_rand = gauss_noise_like(y_z)
+                        z_rand = torch.zeros_like(y_z)
                         x_hat = net(torch.cat([y_steg, z_rand], dim=1), rev=True)
                         secret_hat = iwt(
                             x_hat.narrow(1, split_factor * channels_in, x_hat.shape[1] - split_factor * channels_in)
