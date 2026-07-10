@@ -25,8 +25,8 @@ weight_decay = 1e-5
 weight_step = 150
 gamma = 0.5
 
-lamda_reconstruction = 5    # 還原秘密的權重。設定為 5 代表我們非常看重「秘密能不能完美拿出來」，這項不准出錯。
-lamda_guide = 3     # 偽裝聲音的權重。只要聽起來像就好。
+lamda_reconstruction = 2    # 還原秘密的權重。設定為 5 代表我們非常看重「秘密能不能完美拿出來」，這項不准出錯。
+lamda_guide = 1     # 偽裝聲音的權重。只要聽起來像就好。
 lamda_low_frequency = 1 # 低頻約束的權重
 
 batch_size = 2          # 每次教練丟「幾題」給 AI 寫。因為聲音資料很佔記憶體，所以這裡設 2（一次餵兩組聲音進去）。如果你顯示卡記憶體夠大，可以調成 4 或 8，訓練會更快。
