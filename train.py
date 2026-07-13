@@ -35,7 +35,7 @@ except Exception:
 
 warnings.filterwarnings("ignore")
 steps_per_epoch = 500
-
+AUX_SEED = 12345
 # -----------------------------
 # Utils
 # -----------------------------
@@ -97,7 +97,21 @@ def to_device_batch(batch, device):
 def check_finite(name, t: torch.Tensor):
     if not torch.isfinite(t).all():
         raise RuntimeError(f"[NaN/Inf] {name} 出現 NaN/Inf，請先停下來修正。")
+      
+def fixed_aux_like(x: torch.Tensor, seed: int = 12345) -> torch.Tensor:
+    """
+    依照 x 的 shape、device、dtype，
+    產生每次都相同的固定高斯輔助變數。
+    """
+    generator = torch.Generator(device=x.device)
+    generator.manual_seed(seed)
 
+    return torch.randn(
+        x.shape,
+        generator=generator,
+        device=x.device,
+        dtype=x.dtype
+    )
 
 # -----------------------------
 # Main
@@ -226,9 +240,18 @@ def main():
                 check_finite("steg_q", steg_q)    
 
                 # 4) backward (recover)
-                z_rand = torch.zeros_like(y_z)
-                y_steg_q = dwt(steg_q)                                   # ← 量化後再 DWT 回頻域
-                y_rev_in = torch.cat([y_steg_q, z_rand], dim=1)          # ← 用量化版本
+                # 量化後重新進行 DWT
+                y_steg_q = dwt(steg_q)
+
+                # 固定輔助變數，每次皆產生相同內容
+                z_aux = fixed_aux_like(y_z, seed=12345)
+
+                # 反向還原
+                y_rev_in = torch.cat(
+                    [y_steg_q, z_aux],
+                    dim=1
+                )
+
                 x_hat = net(y_rev_in, rev=True)
                 check_finite("x_hat", x_hat)
 
@@ -296,7 +319,14 @@ def main():
                         y_z = y.narrow(1, split_factor * channels_in, y.shape[1] - split_factor * channels_in)
 
                         steg = iwt(y_steg)
-                        z_rand = torch.zeros_like(y_z)
+                      
+                        z_aux = fixed_aux_like(y_z)
+
+                        y_rev_in = torch.cat(
+                            [y_steg_q, z_aux],
+                            dim=1
+                        )
+                      
                         x_hat = net(torch.cat([y_steg, z_rand], dim=1), rev=True)
                         secret_hat = iwt(
                             x_hat.narrow(1, split_factor * channels_in, x_hat.shape[1] - split_factor * channels_in)
