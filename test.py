@@ -113,9 +113,10 @@ with torch.no_grad():
         steg = iwt(y_steg)        
 
         # 2. 🎯 零雜訊輔助還原 (防炸耳雷包拆除)
-        z_aux = fixed_aux_like(y_z)
+        # 2. 接收端還原
+        z_rand = torch.randn_like(y_z) 
+        x_hat = net(torch.cat([y_steg, z_rand], dim=1), rev=True)
         
-        x_hat = net(torch.cat([y_steg, z_aux], dim=1), rev=True)
         secret_hat_d = x_hat.narrow(1, 8 * c.channels_in, x_hat.shape[1] - 8 * c.channels_in)
         secret_rev = iwt(secret_hat_d)
 

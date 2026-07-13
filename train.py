@@ -246,11 +246,11 @@ def main():
                 y_steg_q = dwt(steg_q)
 
                 # 固定輔助變數，每次皆產生相同內容
-                z_aux = fixed_aux_like(y_z)
+                z_rand = torch.randn_like(y_z)
                 
                 # 反向還原
                 y_rev_in = torch.cat(
-                    [y_steg_q, z_aux],
+                    [y_steg_q, z_rand],
                     dim=1
                 )
 
@@ -324,30 +324,21 @@ def main():
                         noise = torch.zeros_like(steg).uniform_(-0.5, 0.5)
                         steg_q = torch.clamp(32768.0 * steg + noise, -32768, 32767) / 32768.0
                         y_steg_q = dwt(steg_q)
-                        z_aux = fixed_aux_like(y_z)
-                        print(
-                            "Val shapes:",
-                            "cover", cover.shape,
-                            "secret", secret.shape,
-                            "y", y.shape,
-                            "y_steg", y_steg.shape,
-                            "y_z", y_z.shape,
-                            "y_steg_q", y_steg_q.shape,
-                            "z_aux", z_aux.shape,
-                        )
+                        z_rand = torch.randn_like(y_z)
+                        
 
-                        if y_steg_q.shape[0] != z_aux.shape[0]:
-                            if z_aux.shape[0] == 1:
-                                z_aux = z_aux.repeat(y_steg_q.shape[0], 1, 1)
+                        if y_steg_q.shape[0] != z_rand.shape[0]:
+                            if z_rand.shape[0] == 1:
+                                z_rand = z_rand.repeat(y_steg_q.shape[0], 1, 1)
                             elif y_steg_q.shape[0] == 1:
-                                y_steg_q = y_steg_q.repeat(z_aux.shape[0], 1, 1)
+                                y_steg_q = y_steg_q.repeat(z_rand.shape[0], 1, 1)
                             else:
                                 raise RuntimeError(
-                                    f"Validation batch mismatch: cover={cover.shape[0]}, secret={secret.shape[0]}, y={y.shape[0]}, y_steg_q={y_steg_q.shape[0]}, z_aux={z_aux.shape[0]}"
+                                    f"Validation batch mismatch: cover={cover.shape[0]}, secret={secret.shape[0]}, y={y.shape[0]}, y_steg_q={y_steg_q.shape[0]}, z_rand={z_rand.shape[0]}"
                                 )
 
                         y_rev_in = torch.cat(
-                            [y_steg_q, z_aux],
+                            [y_steg_q, z_rand],
                             dim=1
                         )
 
