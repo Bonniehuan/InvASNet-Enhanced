@@ -62,7 +62,16 @@ def to_device_batch(batch, device):
         raise TypeError(f"Unsupported batch type: {type(batch)}")
     return _to_tensor(cover).to(device), _to_tensor(secret).to(device)
     
-def fixed_aux_like(x: torch.Tensor, seed: int = 12345) -> torch.Tensor:
+AUX_SEED = 12345
+
+def fixed_aux_like(
+    x: torch.Tensor,
+    seed: int = AUX_SEED
+) -> torch.Tensor:
+    """
+    根據目前 x 的 shape 產生固定高斯輔助變數。
+    相同 seed、shape、dtype 時，每次結果相同。
+    """
     generator = torch.Generator(device=x.device)
     generator.manual_seed(seed)
 
@@ -104,7 +113,7 @@ with torch.no_grad():
         steg = iwt(y_steg)        
 
         # 2. 🎯 零雜訊輔助還原 (防炸耳雷包拆除)
-        z_aux = fixed_aux_like(y_z, seed=12345)
+        z_aux = fixed_aux_like(y_z)
         
         x_hat = net(torch.cat([y_steg_rec, z_aux], dim=1), rev=True)
         secret_hat_d = x_hat.narrow(1, 8 * c.channels_in, x_hat.shape[1] - 8 * c.channels_in)
