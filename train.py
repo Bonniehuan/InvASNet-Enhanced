@@ -327,8 +327,13 @@ def main():
                         z_aux = fixed_aux_like(y_z)
                         print(
                             "Val shapes:",
-                            y_steg_q.shape,
-                            z_aux.shape
+                            "cover", cover.shape,
+                            "secret", secret.shape,
+                            "y", y.shape,
+                            "y_steg", y_steg.shape,
+                            "y_z", y_z.shape,
+                            "y_steg_q", y_steg_q.shape,
+                            "z_aux", z_aux.shape,
                         )
 
                         if y_steg_q.shape[0] != z_aux.shape[0]:
@@ -338,7 +343,7 @@ def main():
                                 y_steg_q = y_steg_q.repeat(z_aux.shape[0], 1, 1)
                             else:
                                 raise RuntimeError(
-                                    f"Validation batch mismatch: y_steg_q batch={y_steg_q.shape[0]}, z_aux batch={z_aux.shape[0]}"
+                                    f"Validation batch mismatch: cover={cover.shape[0]}, secret={secret.shape[0]}, y={y.shape[0]}, y_steg_q={y_steg_q.shape[0]}, z_aux={z_aux.shape[0]}"
                                 )
 
                         y_rev_in = torch.cat(
