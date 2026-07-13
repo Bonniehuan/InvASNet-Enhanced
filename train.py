@@ -98,16 +98,18 @@ def check_finite(name, t: torch.Tensor):
     if not torch.isfinite(t).all():
         raise RuntimeError(f"[NaN/Inf] {name} 出現 NaN/Inf，請先停下來修正。")
       
-def fixed_aux_like(x: torch.Tensor, seed: int = 12345) -> torch.Tensor:
+def fixed_aux_like(
+    x: torch.Tensor,
+    seed: int = AUX_SEED
+) -> torch.Tensor:
     """
-    依照 x 的 shape、device、dtype，
-    產生每次都相同的固定高斯輔助變數。
+    根據目前 x 的 shape 建立固定高斯輔助變數。
+    相同 shape 與 seed 時，每次產生相同內容。
     """
     generator = torch.Generator(device=x.device)
     generator.manual_seed(seed)
-
     return torch.randn(
-        x.shape,
+        size=x.shape,
         generator=generator,
         device=x.device,
         dtype=x.dtype
@@ -244,7 +246,13 @@ def main():
                 y_steg_q = dwt(steg_q)
 
                 # 固定輔助變數，每次皆產生相同內容
-                z_aux = fixed_aux_like(y_z, seed=12345)
+                z_aux = fixed_aux_like(y_z)
+                print(
+                    "Train shapes:"
+                    y_steg_q.shape,
+                    z_aux.shape
+                )
+
 
                 # 反向還原
                 y_rev_in = torch.cat(
@@ -319,8 +327,16 @@ def main():
                         y_z = y.narrow(1, split_factor * channels_in, y.shape[1] - split_factor * channels_in)
 
                         steg = iwt(y_steg)
-                      
-                        z_aux = fixed_aux_like(y_z, seed=12345)
+                        y_steg_q = dwt(steg_q)
+                        z_aux = fixed_aux_like(y_z)
+                        print(
+
+                            "Val shapes:",
+                            y_steg_q.shape,
+                            z_aux.shape
+
+                        )
+
 
                         y_rev_in = torch.cat(
                             [y_steg_q, z_aux],
@@ -328,7 +344,6 @@ def main():
                         )
                       
                         x_hat = net(
-                            torch.cat([y_steg_q, z_aux], dim=1),
                             rev=True
                         )
                         secret_hat = iwt(
