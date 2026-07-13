@@ -320,14 +320,17 @@ def main():
 
                         steg = iwt(y_steg)
                       
-                        z_aux = fixed_aux_like(y_z)
+                        z_aux = fixed_aux_like(y_z, seed=12345)
 
                         y_rev_in = torch.cat(
                             [y_steg_q, z_aux],
                             dim=1
                         )
                       
-                        x_hat = net(torch.cat([y_steg, z_rand], dim=1), rev=True)
+                        x_hat = net(
+                            torch.cat([y_steg_q, z_aux], dim=1),
+                            rev=True
+                        )
                         secret_hat = iwt(
                             x_hat.narrow(1, split_factor * channels_in, x_hat.shape[1] - split_factor * channels_in)
                         )
