@@ -321,25 +321,32 @@ def main():
                         y_z = y.narrow(1, split_factor * channels_in, y.shape[1] - split_factor * channels_in)
 
                         steg = iwt(y_steg)
+                        noise = torch.zeros_like(steg).uniform_(-0.5, 0.5)
+                        steg_q = torch.clamp(32768.0 * steg + noise, -32768, 32767) / 32768.0
                         y_steg_q = dwt(steg_q)
                         z_aux = fixed_aux_like(y_z)
                         print(
-
                             "Val shapes:",
                             y_steg_q.shape,
                             z_aux.shape
-
                         )
 
+                        if y_steg_q.shape[0] != z_aux.shape[0]:
+                            if z_aux.shape[0] == 1:
+                                z_aux = z_aux.repeat(y_steg_q.shape[0], 1, 1)
+                            elif y_steg_q.shape[0] == 1:
+                                y_steg_q = y_steg_q.repeat(z_aux.shape[0], 1, 1)
+                            else:
+                                raise RuntimeError(
+                                    f"Validation batch mismatch: y_steg_q batch={y_steg_q.shape[0]}, z_aux batch={z_aux.shape[0]}"
+                                )
 
                         y_rev_in = torch.cat(
                             [y_steg_q, z_aux],
                             dim=1
                         )
-                      
-                        x_hat = net(
-                            rev=True
-                        )
+
+                        x_hat = net(y_rev_in, rev=True)
                         secret_hat = iwt(
                             x_hat.narrow(1, split_factor * channels_in, x_hat.shape[1] - split_factor * channels_in)
                         )
