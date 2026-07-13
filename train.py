@@ -248,8 +248,6 @@ def main():
                 # 固定輔助變數，每次皆產生相同內容
                 z_aux = fixed_aux_like(y_z)
                 
-
-
                 # 反向還原
                 y_rev_in = torch.cat(
                     [y_steg_q, z_aux],
