@@ -61,7 +61,18 @@ def to_device_batch(batch, device):
     else:
         raise TypeError(f"Unsupported batch type: {type(batch)}")
     return _to_tensor(cover).to(device), _to_tensor(secret).to(device)
+    
+def fixed_aux_like(x: torch.Tensor, seed: int = 12345) -> torch.Tensor:
+    generator = torch.Generator(device=x.device)
+    generator.manual_seed(seed)
 
+    return torch.randn(
+        x.shape,
+        generator=generator,
+        device=x.device,
+        dtype=x.dtype
+    )
+    
 net = Model()
 net.cpu()
 init_model(net)
@@ -93,9 +104,9 @@ with torch.no_grad():
         steg = iwt(y_steg)        
 
         # 2. 🎯 零雜訊輔助還原 (防炸耳雷包拆除)
-        z = torch.zeros_like(y_z) 
+        z_aux = fixed_aux_like(y_z, seed=12345)
         
-        x_hat = net(torch.cat([y_steg, z], dim=1), rev=True)
+        x_hat = net(torch.cat([y_steg_rec, z_aux], dim=1), rev=True)
         secret_hat_d = x_hat.narrow(1, 8 * c.channels_in, x_hat.shape[1] - 8 * c.channels_in)
         secret_rev = iwt(secret_hat_d)
 
