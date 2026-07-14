@@ -18,7 +18,7 @@ secret_sr = 16000   # 「秘密聲音 (Secret)」預期是 16 kHz（一般的語
 # ---- training hyperparams ----
 log10_lr = -4.5         # 學習率 (Learning Rate)。也就是教練每次巴 AI 頭的「力道」。這裡設定為 $10^{-4.5}$（大約 0.0000316），這是一個在訓練可逆神經網路時非常常見且安全的「微調力道」。
 lr = 10 ** log10_lr
-epochs = 100         # ✨總共要讓 AI 訓練幾個日夜輪迴。
+epochs = 50         # ✨總共要讓 AI 訓練幾個日夜輪迴。
 
 betas = (0.5, 0.999)
 weight_decay = 1e-5
