@@ -111,7 +111,63 @@ with torch.no_grad():
         y_z    = y.narrow(1, 8 * c.channels_in, y.shape[1] - 8 * c.channels_in)
 
         steg = iwt(y_steg)        
-
+        # =========================================================
+        # 8 個小波包子頻帶誤差分析
+        # 放在 steg 產生後、clamp 前
+        # =========================================================
+        cover_d_test = dwt(cover)
+        steg_d_test = dwt(steg)
+        
+        band_names = [
+            "Band 0",
+            "Band 1",
+            "Band 2",
+            "Band 3",
+            "Band 4",
+            "Band 5",
+            "Band 6",
+            "Band 7",
+        ]
+        
+        print("\n========== 8 個子頻帶誤差分析 ==========")
+        
+        for band in range(8):
+            start_ch = band * c.channels_in
+            end_ch = start_ch + c.channels_in
+        
+            cover_band = cover_d_test[:, start_ch:end_ch, :]
+            steg_band = steg_d_test[:, start_ch:end_ch, :]
+        
+            band_mse = torch.mean(
+                (cover_band - steg_band) ** 2
+            )
+        
+            cover_power = torch.mean(
+                cover_band ** 2
+            )
+        
+            steg_power = torch.mean(
+                steg_band ** 2
+            )
+        
+            relative_error = band_mse / (cover_power + 1e-12)
+        
+            band_snr = 10.0 * torch.log10(
+                (cover_power + 1e-12) /
+                (band_mse + 1e-12)
+            )
+        
+            print(
+                f"{band_names[band]} | "
+                f"MSE={band_mse.item():.8e} | "
+                f"相對誤差={relative_error.item():.6f} | "
+                f"SNR={band_snr.item():.2f} dB | "
+                f"Cover能量={cover_power.item():.8e} | "
+                f"Steg能量={steg_power.item():.8e}"
+            )
+        
+        print("========================================\n")
+        
         # 2. 🎯 零雜訊輔助還原 (防炸耳雷包拆除)
         # 2. 接收端還原
         z_rand = torch.randn_like(y_z) 
