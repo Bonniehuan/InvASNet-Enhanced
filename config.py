@@ -11,7 +11,8 @@ checkpoint_on_error = True      # 萬一跑到一半當機，立刻幫你存檔
 
 # ---- audio basic ----
 channels_in = 1               # 代表你的聲音是「單聲道 (Mono)」。如果是立體聲這裡就要改成 2。
-segment_length = # =========================
+segment_length = 1323000
+# =========================
 # InvASNet (Audio, 1D) config
 # =========================
 
