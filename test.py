@@ -97,6 +97,11 @@ net.eval()
 dwt = DWT1D_3Level()
 iwt = IWT1D_3Level()
 
+cover_all = []
+secret_all = []
+steg_all = []
+secret_rev_all = []
+
 with torch.no_grad():
     for i, batch in enumerate(datasets.testloader):
         cover, secret = to_device_batch(batch, device)
@@ -191,8 +196,8 @@ with torch.no_grad():
         print("="*50 + "\n")
 
         # 存檔見真章
-        sf.write("cover.wav", cover[0,0].cpu().numpy(), c.host_sr)
-        sf.write("secret.wav", secret[0,0].cpu().numpy(), c.host_sr)
-        sf.write("steg.wav", steg[0,0].cpu().numpy(), c.host_sr)
-        sf.write("secret_rev.wav", secret_rev[0,0].cpu().numpy(), c.host_sr)
-        break
+        cover_all.append(cover[0,0].cpu())
+        secret_all.append(secret[0,0].cpu())
+        steg_all.append(steg[0,0].cpu())
+        secret_rev_all.append(secret_rev[0,0].cpu())
+     
