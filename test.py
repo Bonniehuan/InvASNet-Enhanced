@@ -10,6 +10,7 @@ import datasets
 import modules.Unet_common as common
 from modules.dwt1d import DWT1D_3Level, IWT1D_3Level
 import soundfile as sf
+import torchaudio
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -61,6 +62,18 @@ def to_device_batch(batch, device):
     else:
         raise TypeError(f"Unsupported batch type: {type(batch)}")
     return _to_tensor(cover).to(device), _to_tensor(secret).to(device)
+
+
+def load_full_audio(path, target_sr=44100):
+    wav, sr = torchaudio.load(path)
+
+    if wav.shape[0] > 1:
+        wav = wav.mean(dim=0, keepdim=True)
+
+    if sr != target_sr:
+        wav = torchaudio.functional.resample(wav, sr, target_sr)
+
+    return wav
     
 AUX_SEED = 12345
 
@@ -102,20 +115,35 @@ secret_all = []
 steg_all = []
 secret_rev_all = []
 
+HOST_PATH = "./data/val/host/rock.00001.wav"
+SECRET_PATH = "./data/val/secret/8297-275155-0002.wav"
+
+cover_full = load_full_audio(HOST_PATH, c.host_sr)
+secret_full = load_full_audio(SECRET_PATH, c.host_sr)
+
+segment = c.segment_length          # 44160 (1 秒)
+
+cover_list = []
+secret_list = []
+steg_list = []
+secret_rev_list = []
+
 with torch.no_grad():
-    for i, batch in enumerate(datasets.testloader):
-        cover, secret = to_device_batch(batch, device)
 
-        # 1. 拆解與偽裝
-        cover_d = dwt(cover)      
-        secret_d = dwt(secret)    
-        x = torch.cat([cover_d, secret_d], dim=1)        
+    total = min(
+        cover_full.shape[1],
+        secret_full.shape[1]
+    ) // segment
 
-        y = net(x, rev=False)
-        y_steg = y.narrow(1, 0, 8 * c.channels_in)       
-        y_z    = y.narrow(1, 8 * c.channels_in, y.shape[1] - 8 * c.channels_in)
+    print(f"共有 {total} 個片段")
 
-        steg = iwt(y_steg)        
+    for i in range(total):
+
+        s = i * segment
+        e = s + segment
+
+        cover = cover_full[:, s:e].unsqueeze(0).to(device)
+        secret = secret_full[:, s:e].unsqueeze(0).to(device)
         # =========================================================
         # 8 個小波包子頻帶誤差分析
         # 放在 steg 產生後、clamp 前
@@ -200,4 +228,14 @@ with torch.no_grad():
         secret_all.append(secret[0,0].cpu())
         steg_all.append(steg[0,0].cpu())
         secret_rev_all.append(secret_rev[0,0].cpu())
-     
+    cover_all = torch.cat(cover_list)
+    secret_all = torch.cat(secret_list)
+    steg_all = torch.cat(steg_list)
+    secret_rev_all = torch.cat(secret_rev_list)
+    
+    sf.write("cover.wav", cover_all.numpy(), c.host_sr)
+    sf.write("secret.wav", secret_all.numpy(), c.host_sr)
+    sf.write("steg.wav", steg_all.numpy(), c.host_sr)
+    sf.write("secret_rev.wav", secret_rev_all.numpy(), c.host_sr)
+    
+    print("✅ 已輸出完整音檔")
